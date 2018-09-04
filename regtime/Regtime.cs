@@ -22,8 +22,112 @@ namespace regtime
         [DllImport("kernel32.dll")]
         public static extern bool Process32Next(SafeFileHandle hSnapshot, ref Processentry32 lppe);
         [DllImport("kernel32.dll")]
-        static extern uint FormatMessage(FormatMessageFlags dwFlags, IntPtr lpSource, uint dwMessageId, uint dwLanguageId, [Out] StringBuilder lpBuffer,
-   uint nSize, IntPtr Arguments);
+        public static extern uint FormatMessage(FormatMessageFlags dwFlags, IntPtr lpSource, int dwMessageId, uint dwLanguageId, [Out] StringBuilder lpBuffer, uint nSize, IntPtr Arguments);
+        [DllImport("kernel32.dll")]
+        public static extern uint FormatMessage(FormatMessageFlags dwFlags, IntPtr lpSource, int dwMessageId, uint dwLanguageId, [Out] StringBuilder lpBuffer, uint nSize, string[] Arguments);
+        [DllImport("kernel32.dll")]
+        public static extern uint FormatMessage(FormatMessageFlags dwFlags, string[] lpSource, int dwMessageId, uint dwLanguageId, [Out] StringBuilder lpBuffer, uint nSize, string[] Arguments);
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern int RegConnectRegistry(string lpmachineName, HandleKey hKey, out UIntPtr phKResult);
+        [DllImport("advapi32.dll", CharSet = CharSet.Auto)]
+        public static extern int RegOpenKeyEx( UIntPtr hKey, string subKey, uint ulOptions, KeyOptions samDesired, out UIntPtr hkResult);
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern int RegCloseKey( UIntPtr hKey);
+        [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        public static extern int RegQueryInfoKey(UIntPtr hKey, [Out()]StringBuilder lpClass, ref uint lpcchClass,
+           IntPtr lpReserved, out uint lpcSubkey, out uint lpcchMaxSubkeyLen,
+           out uint lpcchMaxClassLen, out uint lpcValues, out uint lpcchMaxValueNameLen,
+           out uint lpcbMaxValueLen, IntPtr lpSecurityDescriptor, IntPtr lpftLastWriteTime);
+        [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        public static extern int RegQueryInfoKey(UIntPtr hKey, IntPtr lpClass, IntPtr lpcchClass,
+           IntPtr lpReserved, IntPtr lpcSubkey, IntPtr lpcchMaxSubkeyLen,
+           IntPtr lpcchMaxClassLen, IntPtr lpcValues, IntPtr lpcchMaxValueNameLen,
+           IntPtr lpcbMaxValueLen, IntPtr lpSecurityDescriptor, IntPtr lpftLastWriteTime);
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
+        public static extern IntPtr GetCommandLine();
+        [DllImport("shell32.dll", SetLastError = true)]
+        public static extern IntPtr CommandLineToArgvW(
+           [MarshalAs(UnmanagedType.LPWStr)] string lpCmdLine,
+           out int pNumArgs);
+        [DllImport("shell32.dll", SetLastError = true)]
+        public static extern IntPtr CommandLineToArgv(
+           IntPtr lpCmdLine,
+           out int pNumArgs);
+
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr LocalFree(IntPtr hMem);
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr GetConsoleWindow();
+        [DllImport("user32.dll", EntryPoint = "ShowWindow", SetLastError = true)]
+        public static extern bool ShowWindow(IntPtr hWnd, ShowWindowEnum nCmdShow);
+    }
+    public enum ShowWindowEnum : int
+    {
+        /// <summary>
+        /// Minimizes a window, even if the thread that owns the window is not responding. This flag should only be used when minimizing windows from a different thread.
+        /// </summary>
+        /// <remarks>SW_FORCEMINIMIZE</remarks>
+        Forceminimize = 11,
+        /// <summary>
+        /// Hides the window and activates another window. 
+        /// </summary>
+        /// <remarks>SW_HIDE</remarks>
+        Hide = 0,
+        /// <summary>
+        /// Maximizes the specified window. 
+        /// </summary>
+        /// <remarks>SW_MAXIMIZE</remarks>
+        Maximize = 3,
+        /// <summary>
+        /// Minimizes the specified window and activates the next top-level window in the Z order. 
+        /// </summary>
+        /// <remarks>SW_MINIMIZE</remarks>
+        Minimize = 6,
+        /// <summary>
+        /// Activates and displays the window. If the window is minimized or maximized, the system restores it to its original size and position. An application should specify this flag when restoring a minimized window. 
+        /// </summary>
+        /// <remarks>SW_RESTORE</remarks>
+        Restore = 9,
+        /// <summary>
+        /// Activates the window and displays it in its current size and position. 
+        /// </summary>
+        /// <remarks>SW_SHOW</remarks>
+        Show = 5,
+        /// <summary>
+        /// Sets the show state based on the SW_ value specified in the STARTUPINFO structure passed to the CreateProcess function by the program that started the application. 
+        /// </summary>
+        /// <remarks>SW_SHOWDEFAULT</remarks>
+        Showdefault = 10,
+        /// <summary>
+        /// Activates the window and displays it as a maximized window. 
+        /// </summary>
+        /// <remarks>SW_SHOWMAXIMIZED</remarks>
+        Showmaximized = 3,
+        /// <summary>
+        /// Activates the window and displays it as a minimized window. 
+        /// </summary>
+        /// <remarks>SW_SHOWMINIMIZED</remarks>
+        Showminimized = 2,
+        /// <summary>
+        /// Displays the window as a minimized window. This value is similar to SW_SHOWMINIMIZED, except the window is not activated. 
+        /// </summary>
+        /// <remarks>SW_SHOWMINNOACTIVE</remarks>
+        Showminnoactive = 7,
+        /// <summary>
+        /// Displays the window in its current size and position. This value is similar to SW_SHOW, except that the window is not activated. 
+        /// </summary>
+        /// <remarks>SW_SHOWNA</remarks>
+        Showna = 8,
+        /// <summary>
+        /// Displays a window in its most recent size and position. This value is similar to SW_SHOWNORMAL, except that the window is not activated. 
+        /// </summary>
+        /// <remarks>SW_SHOWNOACTIVATE</remarks>
+        Shownoactivate = 4,
+        /// <summary>
+        /// Activates and displays a window. If the window is minimized or maximized, the system restores it to its original size and position. An application should specify this flag when displaying the window for the first time. 
+        /// </summary>
+        /// <remarks>SW_SHOWNORMAL</remarks>
+        Shownormal = 1,
     }
     [Flags]
     public enum SnapshotFlags : uint
@@ -48,6 +152,70 @@ namespace regtime
         DynData = 0x80000006,
     }
     [Flags]
+    public enum KeyOptions : uint
+    {
+        /// <summary>
+        /// KEY_QUERY_VALUE
+        /// </summary>
+        QueryValue = 1 << 0,
+        /// <summary>
+        /// KEY_SET_VALUE
+        /// </summary>
+        SetValue = 1 << 1,
+        /// <summary>
+        /// KEY_CREATE_SUB_KEY
+        /// </summary>
+        CreateSubKey = 1 << 2,
+        /// <summary>
+        /// KEY_ENUMERATE_SUB_KEYS
+        /// </summary>
+        EnumerateSubKeys = 1 << 3,
+        /// <summary>
+        /// KEY_NOTIFY
+        /// </summary>
+        Notify = 1 << 4,
+        /// <summary>
+        /// KEY_CREATE_LINK
+        /// </summary>
+        CreateLink = 1 << 5,
+        /// <summary>
+        /// KEY_WOW64_64KEY
+        /// </summary>
+        Wow64_64Key = 1 << 8,
+        /// <summary>
+        /// KEY_WOW64_32KEY
+        /// </summary>
+        Wow64_32Key = 1 << 9,
+        /// <summary>
+        /// KEY_WRITE
+        /// </summary>
+        Write = 0x20006,
+        /// <summary>
+        /// KEY_EXECUTE
+        /// </summary>
+        Execute = 0x20019,
+        /// <summary>
+        /// KEY_READ
+        /// </summary>
+        Read = 0x20019,
+        /// <summary>
+        /// KEY_ALL_ACCESS
+        /// </summary>
+        AllAccess = 0xf003f,
+    }
+    public enum RegWow64Options : uint
+    {
+        None = 0,
+        /// <summary>
+        /// KEY_WOW64_64KEY
+        /// </summary>
+        KEY_WOW64_64KEY = 0x0100,
+        /// <summary>
+        /// KEY_WOW64_32KEY
+        /// </summary>
+        KEY_WOW64_32KEY = 0x0200
+    }
+    [Flags]
     internal enum FormatMessageFlags :uint
     {
         AllocateBuffer = 0x00000100,
@@ -57,15 +225,24 @@ namespace regtime
         FromHmodule = 0x00000800,
         FromString = 0x00000400,
     }
-    struct Options
+    readonly struct Options
     {
-        public bool AsCUI;
-        public bool IsCUI;
-        public bool ShowHelp;
-        public bool DispKey;
-        public string Machine;
-        public bool DispAsGMT;
-        public bool DispAsUnicode;
+        public readonly bool AsCUI;
+        public bool IsCUI => AsCUI;
+        public readonly bool ShowHelp;
+        public readonly bool DispKey;
+        public readonly string Machine;
+        public readonly bool DispAsGMT;
+        public readonly bool DispAsUnicode;
+        public Options(bool AsCUI, bool ShowHelp, bool DispKey, string Machine, bool DispAsGMT, bool DispAsUnicode)
+            => (this.AsCUI, this.ShowHelp, this.DispKey, this.Machine, this.DispAsGMT, this.DispAsUnicode)
+            = (AsCUI, ShowHelp, DispKey, Machine, DispAsGMT, DispAsUnicode);
+        public Options Set(bool? AsCUI = null, bool? ShowHelp = null, bool? DispKey = null, string Machine = null, bool? DispAsGMT = null, bool? DispAsUnicode = null)
+            => AsCUI == null && ShowHelp == null && DispKey == null && Machine == null && DispAsGMT == null && DispAsUnicode == null ? this
+            : new Options(AsCUI ?? this.AsCUI, ShowHelp ?? this.ShowHelp, DispKey ?? this.DispKey, Machine ?? this.Machine, DispAsGMT ?? this.DispAsGMT, DispAsUnicode ?? this.DispAsUnicode);
+        public void Deconstruct(out bool AsCUI, out bool ShowHelp, out bool DispKey, out string Machine, out bool DispAsGMT, out bool DispAsUnicode)
+            => (AsCUI, ShowHelp, DispKey, Machine, DispAsGMT, DispAsUnicode)
+            = (this.AsCUI, this.ShowHelp, this.DispKey, this.Machine, this.DispAsGMT, this.DispAsUnicode);
     }
     [StructLayout(LayoutKind.Sequential)]
     public struct Processentry32
@@ -84,7 +261,7 @@ namespace regtime
     };
     class Regtime
     {
-        internal static Func<TextWriter, string> my_puts;
+        internal static Action<TextWriter, string> my_puts;
         internal static TextWriter Out = null;
         internal static TextWriter Error = null;
 
@@ -163,7 +340,7 @@ namespace regtime
             }
             return false;
         }
-        void my_putsG(TextWriter h, string s)
+        static void my_putsG(TextWriter h, string s)
         {
             System.Windows.Forms.MessageBoxIcon n = h == Regtime.Error && h != null
                 ? System.Windows.Forms.MessageBoxIcon.Error
@@ -175,104 +352,88 @@ namespace regtime
         }
 
         // Console, ANSI
-        void my_putsCA(TextWriter h, string s)
+        static void my_putsCA(TextWriter h, string s)
         {
             h.WriteLine(s);
         }
 
         // Console, Wide
-        void my_putsCW(TextWriter h, string s)
+        static void my_putsCW(TextWriter h, string s)
         {
             h.WriteLine(s);
         }
 
-        void my_printf(TextWriter h, params string[] lpszFormat)
+        static void my_printf(TextWriter h, params string[] lpszFormat)
         {
-            va_list ap;
-            LPTSTR buf;
-            DWORD r;
-
-            va_start(ap, lpszFormat);
-            r = NativeMethods.FormatMessage(
+            var buf = new StringBuilder(256);
+            var r = NativeMethods.FormatMessage(
                     FormatMessageFlags.AllocateBuffer | FormatMessageFlags.FromSystem,
-                    (LPCVOID)lpszFormat,
-                    0, 0, (LPTSTR) & buf, 0,
-                    &ap);
-            if (r) my_puts(h, buf);
-
-            va_end(ap);
-            LocalFree(buf);
+                    lpszFormat,
+                    0, 0, buf, 0,
+                    lpszFormat);
+            if (0 < r) my_puts(h, buf.ToString());
         }
 
-        void ShowError(uint dwErrorCode, string s)
+        static void ShowError(int dwErrorCode, string s = null)
         {
-            LPVOID p1 = NULL, p2 = NULL;
-            DWORD r;
-            TCHAR buf[1024];
-            DWORD_PTR pArgs[2];
-
-            __try{
-                r = NativeMethods.FormatMessage(
-                    FormatMessageFlags.AllocateBuffer | FormatMessageFlags.FromSystem,
-                    IntPtr.Zero, dwErrorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                    (LPTSTR) & p1, 0, NULL);
-                if (r)
+            uint r;
+            const int LangNeutral = 0x00;
+            const int SubLangDefault = 0x01;
+            var lang = (uint)MakeLangId(LangNeutral, SubLangDefault);
+            var message = new StringBuilder(255);
+            r = NativeMethods.FormatMessage(
+                FormatMessageFlags.AllocateBuffer | FormatMessageFlags.FromSystem,
+                IntPtr.Zero, dwErrorCode, lang,
+                message, (uint)message.Capacity, IntPtr.Zero);
+            if (0 < r)
+            {
+                if (s != null)
                 {
-                    if (s)
+                    IntPtr formatPtr = Marshal.StringToHGlobalAnsi("%1!s!:%2!s!");
+                    var _message = new StringBuilder(255);
+                    var pArgs = new []{ s, message.ToString() };
+                    r = NativeMethods.FormatMessage(
+                        FormatMessageFlags.AllocateBuffer | FormatMessageFlags.FromString | FormatMessageFlags.ArgumentArray,
+                        formatPtr,
+                        0,
+                        0,
+                        _message,
+                        (uint)_message.Capacity,
+                        pArgs);
+                    if (0 < r)
                     {
-                        IntPtr formatPtr = Marshal.StringToHGlobalAnsi("%1!s!:%2!s!");
-                        pArgs[0] = (DWORD_PTR)s;
-                        pArgs[1] = (DWORD_PTR)p1;
-                        r = NativeMethods.FormatMessage(
-                            FormatMessageFlags.AllocateBuffer | FormatMessageFlags.FromString | FormatMessageFlags.ArgumentArray,
-                            fomratPtr,
-                            0,
-                            0,
-                            (LPTSTR) & p2,
-                            0,
-                            (va_list*)pArgs);
-                        if (r)
-                        {
-                            my_puts(Error, (LPCTSTR)p2);
-                        }
-                        else
-                        {
-                            my_puts(hStderr, (LPCTSTR)p1);
-                        }
+                        my_puts(Error, _message.ToString());
                     }
                     else
                     {
-                        my_puts(hStderr, (LPCTSTR)p1);
+                        my_puts(Error, message.ToString());
                     }
                 }
                 else
                 {
-                    StringCchPrintf(buf, _countof(buf), s ? _T("Error:%lu\n%s\n") : _T("Error:%lu\n"), dwErrorCode, s);
-                    my_puts(hStderr, buf);
+                    my_puts(Error, message.ToString());
                 }
             }
-            __finally{
-                if (p1) LocalFree(p1);
-                if (p2) LocalFree(p2);
+            else
+            {
+                my_puts(Error, s != null ? $"Error:{dwErrorCode}\n{s}" : $"Error:{dwErrorCode}");
             }
         }
 
-        void ShowHelp()
+        static void ShowHelp()
         {
-            var s =
-                "\nregtime - show timestamp of registry key.\n\n"
+            my_puts(Out, "\nregtime - show timestamp of registry key.\n\n"
                 + "Usage:  regtime [-c|-w] [-k] [\\\\machine] name-of-RegistryKey\n\n"
                 + "        -c : run as console program.\n"
                 + "        -w : run as GUI program.\n"
                 + "        -k : display registry key name prior to  timestamp.\n"
                 + "        -g : display timestamp as GMT.\n"
-                + "        -u : display with Unicode.\n";
-            my_puts(Out, s);
+                + "        -u : display with Unicode.\n");
 
             return;
         }
 
-        bool StringToHive(string lpszRegKey, out HandleKey phkHive, out string lplpszKey)
+        static bool StringToHive(string lpszRegKey, out HandleKey phkHive, out string lplpszKey)
         {
             var sh = new Dictionary<string, HandleKey>{
                 { "HKEY_CLASSES_ROOT\\", HandleKey.ClassesRoot },
@@ -302,145 +463,136 @@ namespace regtime
 
         }
 
-        bool GetRegTimestamp(string lpszMachine, string lpszRegKey, out System.Runtime.InteropServices.ComTypes.FILETIME lpTime)
+        static bool GetRegTimestamp(string lpszMachine, string lpszRegKey, out System.Runtime.InteropServices.ComTypes.FILETIME Time)
         {
          
             if (!StringToHive(lpszRegKey,out var hHive, out var lpszKey))
             {
                 throw new ArgumentException();
             }
-
-            __try{
-                r = RegConnectRegistry(lpszMachine, hHive, &hReg);
-                if (r != ERROR_SUCCESS)
-                {
-                    ShowError(r, lpszMachine ? lpszMachine : _T("RegConnectRegistry"));
-                    __leave;
-                }
-
-                r = RegOpenKeyEx(hReg, lpszKey, 0, KEY_READ, &hSubKey);
+            const int ERROR_SUCCESS = 0;
+            var r = NativeMethods.RegConnectRegistry(lpszMachine, hHive, out var hReg);
+            if (r != ERROR_SUCCESS)
+            {
+                ShowError(r, lpszMachine ?? "RegConnectRegistry");
+                Time = default;
+                return false;
+            }
+            using (Disposable.Create(() => NativeMethods.RegCloseKey(hReg)))
+            {
+                r = NativeMethods.RegOpenKeyEx(hReg, lpszKey, 0, KeyOptions.Read, out var hSubKey);
                 if (r != ERROR_SUCCESS)
                 {
                     ShowError(r, lpszKey);
-                    __leave;
+                    Time = default;
+                    return false;
                 }
-
-                r = RegQueryInfoKey(hSubKey, NULL, NULL, NULL,
-                        NULL, NULL, NULL, NULL, NULL, NULL, NULL, lpTime);
-                if (r != ERROR_SUCCESS)
+                using (Disposable.Create(() => NativeMethods.RegCloseKey(hSubKey)))
                 {
-                    ShowError(r, lpszKey);
-                    __leave;
-                }
+                    var Size = Marshal.SizeOf<System.Runtime.InteropServices.ComTypes.FILETIME>();
+                    var TimePtr = Marshal.AllocCoTaskMem(Size);
+                    using (Disposable.Create(() => Marshal.FreeCoTaskMem(TimePtr)))
+                    {
+                        r = NativeMethods.RegQueryInfoKey(hSubKey, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, TimePtr);
+                        Time = (System.Runtime.InteropServices.ComTypes.FILETIME)Marshal.PtrToStructure(TimePtr, typeof(System.Runtime.InteropServices.ComTypes.FILETIME));
 
-                Result = TRUE;
+                        if (r != ERROR_SUCCESS)
+                        {
+                            ShowError(r, lpszKey);
+                            return false;
+                        }
+                        return true;
+                    }
+                }
             }
-            __finally{
-                if (hSubKey != NULL) RegCloseKey(hSubKey);
-                if (hReg != NULL) RegCloseKey(hReg);
-            }
-            return Result;
         }
 
-        bool PutTimestamp(string lpszKey, System.Runtime.InteropServices.ComTypes.FILETIME Time, Options lpOpt )
+        static bool PutTimestamp(string lpszKey, System.Runtime.InteropServices.ComTypes.FILETIME Time, Options lpOpt )
         {
-            System.Runtime.InteropServices.ComTypes.FILETIME ftLocal;
-            DateTime stTime;
-
-            long _Time = (((long)Time.dwHighDateTime) << 32) | Time.dwLowDateTime;
-
-            Time = lpOpt.DispAsGMT ? DateTime.FromFileTimeUtc(_Time)
+            var _Time = unchecked((long)(((ulong)Time.dwHighDateTime) << 32) | (uint)Time.dwLowDateTime);
+            var __Time = lpOpt.DispAsGMT ? DateTime.FromFileTimeUtc(_Time)
                 : DateTime.FromFileTime(_Time);
-
-	        my_printf(hStdout,
-                    lpOpt->DispKey?
-                    _T("%8!s! - %1!4.4d!-%2!2.2d!-%3!2.2d! %4!2.2d!:%5!2.2d!:%6!2.2d!.%7!3.3d!\n") :
-
-                    _T("%1!4.4d!-%2!2.2d!-%3!2.2d! %4!2.2d!:%5!2.2d!:%6!2.2d!.%7!3.3d!\n"),
-			        stTime.wYear,
-			        stTime.wMonth,
-			        stTime.wDay,
-			        stTime.wHour,
-			        stTime.wMinute,
-			        stTime.wSecond,
-			        stTime.wMilliseconds,
-			        lpszKey
-			        );
-	        return TRUE;
-
+            my_printf(Out, $"{__Time:yyyy/MM/dd}");
+            return true;
         }
-        static void Main(string[] args)
+        static string GetCommandLine() => NativeMethods.GetCommandLine() is IntPtr Line ? Marshal.PtrToStringAuto(Line) : null;
+        static IEnumerable<string> CommandLineToArgv(IntPtr CommandLine) {
+            var Ptr = NativeMethods.CommandLineToArgv(CommandLine, out var NumArgs);
+            if (Ptr == IntPtr.Zero)
+                return Enumerable.Empty<string>();
+            IEnumerable<string> ReadStrings()
+            {
+                using (Disposable.Create(() => NativeMethods.LocalFree(Ptr)))
+                    foreach (var i in Enumerable.Range(0, NumArgs))
+                        yield return Marshal.PtrToStringAuto(Marshal.ReadIntPtr(Ptr, i * IntPtr.Size));
+            }
+            return ReadStrings();
+        }
+        static int Main(string[] args)
         {
             //int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
-            int nArgs;
-            string lplpszArgs;
-            int i, n = 0;
-            string p;
-            System.Runtime.InteropServices.ComTypes.FILETIME ft;
-            Options opt;
+            Options opt = default;
     
-            opt.Machine = null;
-
-            opt.IsCUI = opt.AsCUI = IsCommandLine();
-            lplpszArgs = CommandLineToArgvW(GetCommandLineW(), &nArgs);
-            if (lplpszArgs)
+            opt = opt.Set(AsCUI: IsCommandLine());
+            var CommandLine = NativeMethods.GetCommandLine();
+            var path = new List<string>();
+            if (CommandLine != IntPtr.Zero)
             {
-                for (i = 1; i < nArgs; i++)
+                var lplpszArgs = CommandLineToArgv(CommandLine).ToArray();
+                var ShowHelp = false;
+                var AsCUI = false;
+                var DispKey = false;
+                var DispAsGMT = false;
+                var DispAsUnicode = false;
+                string Machine = null;
+                foreach (var arg in lplpszArgs)
                 {
-                    p = lplpszArgs[i];
-                    if (*p == _T('-') || *p == _T('/'))
+                    if (arg[0] == '-' || arg[0] == '/')
                     {
-                        *p = '\0';
-                        p++;
-                        while (*p)
+                        foreach (var p in arg)
                         {
-                            switch (*p)
+                            switch (p)
                             {
-                                case _T('h'):
-                                case _T('H'):
-                                case _T('?'):
-                                    opt.ShowHelp = TRUE;
+                                case 'h':
+                                case 'H':
+                                case '?':
+                                    ShowHelp = true;
                                     break;
-                                case _T('c'):
-                                case _T('C'):
-                                    opt.AsCUI = TRUE;
+                                case 'c':
+                                case 'C':
+                                    AsCUI = true;
                                     break;
-                                case _T('w'):
-                                case _T('W'):
-                                    opt.AsCUI = FALSE;
+                                case 'w':
+                                case 'W':
+                                    AsCUI = false;
                                     break;
-                                case _T('k'):
-                                case _T('K'):
-                                    opt.DispKey = TRUE;
+                                case 'k':
+                                case 'K':
+                                    DispKey = true;
                                     break;
-                                case _T('g'):
-                                case _T('G'):
-                                    opt.DispAsGMT = TRUE;
+                                case 'g':
+                                case 'G':
+                                    DispAsGMT = true;
                                     break;
-                                case _T('u'):
-                                case _T('U'):
-                                    opt.DispAsUnicode = TRUE;
+                                case 'u':
+                                case 'U':
+                                    DispAsUnicode = true;
                                     break;
                             }
-                            p++;
                         }
                     }
-                    else if (*p == '\\' && *(p + 1) == '\\')
-                    {
-                        opt.Machine = lplpszArgs[i];
-                        lplpszArgs[i] = NULL;
-                    }
+                    else if (arg[0] == '\\' && arg[1] == '\\')
+                        Machine = arg;
                     else
-                    {
-                        n++;
-                    }
+                        path.Add(arg);
                 }
+                opt = opt.Set(AsCUI: AsCUI, ShowHelp: ShowHelp, DispKey: DispKey, Machine: Machine, DispAsGMT: DispAsGMT, DispAsUnicode: DispAsUnicode);
             }
             else
             {
                 return -1;
             }
-            if (n == 0) opt.ShowHelp = TRUE;
+            if (!path.Any()) opt = opt.Set(ShowHelp: true);
 
             if (opt.AsCUI)
             {
@@ -453,15 +605,15 @@ namespace regtime
 		        hStderr = CreateFile( _T("CONOUT$"), GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
 		        my_puts = my_putsC;
 		        */
-                hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-                hStderr = GetStdHandle(STD_ERROR_HANDLE);
+                Out = Console.Out;
+                Error = Console.Error;
                 if (opt.DispAsUnicode) my_puts = my_putsCW;
                 else my_puts = my_putsCA;
             }
             else
             {
-                hStderr = GetStdHandle(STD_ERROR_HANDLE);
-                hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+                Error = Console.Error;
+                Out = Console.Out;
                 my_puts = my_putsG;
             }
 
@@ -471,26 +623,58 @@ namespace regtime
                 return 0;
             }
             if (!opt.IsCUI)
-                ShowWindow(GetConsoleWindow(), SW_HIDE);
+                NativeMethods.ShowWindow(NativeMethods.GetConsoleWindow(), ShowWindowEnum.Hide);
 
-            for (i = 1; i < nArgs; i++)
+            foreach(var p in path)
             {
-                p = lplpszArgs[i];
-                if (!p || !*p) continue;
-                if (GetRegTimestamp(opt.Machine, p, &ft))
+                if (string.IsNullOrEmpty(p))
+                    continue;
+                if (GetRegTimestamp(opt.Machine, p, out var ft))
                 {
-                    PutTimestamp(p, &ft, &opt);
+                    PutTimestamp(p, ft, opt);
                 }
             }
-            if (lplpszArgs) LocalFree(lplpszArgs);
-
             return 0;
-}
+        }
+        static RegistryKey PointerToRegistryKey(IntPtr hKey, bool Writable, bool ownsHandle)
+        {
+            // Create a SafeHandles.SafeRegistryHandle from this pointer - this is a private class
+            var privateConstructors = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            var safeRegistryHandleType = typeof(Microsoft.Win32.SafeHandles.SafeHandleZeroOrMinusOneIsInvalid).Assembly.GetType("Microsoft.Win32.SafeHandles.SafeRegistryHandle");
+            var safeRegistryHandleConstructorTypes = new[] { typeof(IntPtr), typeof(bool) };
+            var safeRegistryHandleConstructor = safeRegistryHandleType.GetConstructor(privateConstructors, null, safeRegistryHandleConstructorTypes, null);
+            var safeHandle = safeRegistryHandleConstructor.Invoke(new object[] { hKey, ownsHandle });
+            // Create a new Registry key using the private constructor using the safeHandle - this should then behave like a .NET natively opened handle and disposed of correctly
+            var registryKeyType = typeof(RegistryKey);
+            var registryKeyConstructorTypes = new[] { safeRegistryHandleType, typeof(bool) };
+            var registryKeyConstructor = registryKeyType.GetConstructor(privateConstructors, null, registryKeyConstructorTypes, null);
+            return (RegistryKey)registryKeyConstructor.Invoke(new object[] { safeHandle, Writable });
+        }
     }
     static class KeyValuePairExtentsions
     {
         public static void Deconstruct<T1, T2>(this KeyValuePair<T1, T2> self, out T1 Key, out T2 Value)
             => (Key, Value) = (self.Key, self.Value);
+    }
+    internal class Disposable : IDisposable
+    {
+        Action Action;
+        public static Disposable Create(Action Action) => new Disposable(Action);
+        Disposable(Action Action)
+            => this.Action = Action ?? throw new ArgumentNullException(nameof(Action));
+        public void Dispose()
+        {
+            try
+            {
+                Action?.Invoke();
+            }
+            catch {
+                // noop
+            }
+            finally {
+                Action = null;
+            }
+        }
     }
 }
 
