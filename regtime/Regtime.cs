@@ -50,7 +50,7 @@ namespace regtime
            [MarshalAs(UnmanagedType.LPWStr)] string lpCmdLine,
            out int pNumArgs);
         [DllImport("shell32.dll", SetLastError = true)]
-        public static extern IntPtr CommandLineToArgv(
+        public static extern IntPtr CommandLineToArgvW(
            IntPtr lpCmdLine,
            out int pNumArgs);
 
@@ -243,6 +243,8 @@ namespace regtime
         public void Deconstruct(out bool AsCUI, out bool ShowHelp, out bool DispKey, out string Machine, out bool DispAsGMT, out bool DispAsUnicode)
             => (AsCUI, ShowHelp, DispKey, Machine, DispAsGMT, DispAsUnicode)
             = (this.AsCUI, this.ShowHelp, this.DispKey, this.Machine, this.DispAsGMT, this.DispAsUnicode);
+        public override string ToString()
+            => $"{nameof(Options)}:{nameof(AsCUI)}:{AsCUI}, {nameof(ShowHelp)}:{ShowHelp}, {nameof(DispKey)}:{DispKey}, {nameof(Machine)}:{Machine}, {nameof(DispAsGMT)}:{DispAsGMT}, {nameof(DispAsUnicode)}:{DispAsUnicode}";
     }
     [StructLayout(LayoutKind.Sequential)]
     public struct Processentry32
@@ -515,37 +517,23 @@ namespace regtime
             my_printf(Out, $"{__Time:yyyy/MM/dd}");
             return true;
         }
-        static string GetCommandLine() => NativeMethods.GetCommandLine() is IntPtr Line ? Marshal.PtrToStringAuto(Line) : null;
-        static IEnumerable<string> CommandLineToArgv(IntPtr CommandLine) {
-            var Ptr = NativeMethods.CommandLineToArgv(CommandLine, out var NumArgs);
-            if (Ptr == IntPtr.Zero)
-                return Enumerable.Empty<string>();
-            IEnumerable<string> ReadStrings()
-            {
-                using (Disposable.Create(() => NativeMethods.LocalFree(Ptr)))
-                    foreach (var i in Enumerable.Range(0, NumArgs))
-                        yield return Marshal.PtrToStringAuto(Marshal.ReadIntPtr(Ptr, i * IntPtr.Size));
-            }
-            return ReadStrings();
-        }
         static int Main(string[] args)
         {
             //int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
             Options opt = default;
     
             opt = opt.Set(AsCUI: IsCommandLine());
-            var CommandLine = NativeMethods.GetCommandLine();
+            var CommandLine = Environment.GetCommandLineArgs();
             var path = new List<string>();
-            if (CommandLine != IntPtr.Zero)
+            if (CommandLine != null)
             {
-                var lplpszArgs = CommandLineToArgv(CommandLine).ToArray();
                 var ShowHelp = false;
                 var AsCUI = false;
                 var DispKey = false;
                 var DispAsGMT = false;
                 var DispAsUnicode = false;
                 string Machine = null;
-                foreach (var arg in lplpszArgs)
+                foreach (var arg in CommandLine.Skip(1))
                 {
                     if (arg[0] == '-' || arg[0] == '/')
                     {
