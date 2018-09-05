@@ -254,14 +254,13 @@ namespace regtime
                 if (hSnapshot.IsInvalid)
                     return false;
                 // find my process and get parent's pid
-                var pe32s = hSnapshot.GetProcess32().ToArray();
-                ppid = pe32s.FirstOrDefault(pe32 => pe32.ProcessID == pid).ParentProcessID;
+                ppid = hSnapshot.GetProcess32().FirstOrDefault(pe32 => pe32.ProcessID == pid).ParentProcessID;
 
                 if (ppid == 0)
                     return false; // not found
 
                 // find parrent process and get process name
-                var target = pe32s.FirstOrDefault(pe32 => pe32.ProcessID == ppid);
+                var target = hSnapshot.GetProcess32().FirstOrDefault(pe32 => pe32.ProcessID == ppid);
                 ParentName = target.ExeFile;
                 return target != default;
             }

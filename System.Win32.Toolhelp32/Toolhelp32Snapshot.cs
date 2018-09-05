@@ -31,6 +31,10 @@ namespace System.Win32.Toolhelp32
             public static extern bool Module32First(Toolhelp32Snapshot hSnapshot, ref Moduleentry32 lpme);
             [DllImport(Kernel32, SetLastError = true, CharSet = CharSet.Unicode)]
             public static extern bool Module32Next(Toolhelp32Snapshot hSnapshot, ref Moduleentry32 lpme);
+            [DllImport(Kernel32, SetLastError = true)]
+            public static extern bool Heap32First(Toolhelp32Snapshot hSnapshot, ref Moduleentry32 lpme);
+            [DllImport(Kernel32, SetLastError = true, CharSet = CharSet.Unicode)]
+            public static extern bool Module32Next(Toolhelp32Snapshot hSnapshot, ref Moduleentry32 lpme);
         }
         public IEnumerable<Processentry32> GetProcess32()
         {
