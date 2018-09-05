@@ -59,5 +59,11 @@
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\System.Win32.Toolhelp32\System.Win32.Toolhelp32.csproj">
+      <Project>{a6fc9cdf-037b-43fe-94ca-9969905ad832}</Project>
+      <Name>System.Win32.Toolhelp32</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

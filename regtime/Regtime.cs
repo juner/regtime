@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Win32.Toolhelp32;
 using System.Threading.Tasks;
 
 namespace regtime
@@ -15,8 +16,6 @@ namespace regtime
     {
         [DllImport("kernel32.dll")]
         public static extern uint GetCurrentProcessId();
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern SafeFileHandle CreateToolhelp32Snapshot(SnapshotFlags dwFlags, uint th32ProcessID);
         [DllImport("kernel32.dll")]
         public static extern bool Process32First(SafeFileHandle hSnapshot, ref Processentry32 lppe);
         [DllImport("kernel32.dll")]
@@ -129,18 +128,6 @@ namespace regtime
         /// <remarks>SW_SHOWNORMAL</remarks>
         Shownormal = 1,
     }
-    [Flags]
-    public enum SnapshotFlags : uint
-    {
-        HeapList = 0x00000001,
-        Process = 0x00000002,
-        Thread = 0x00000004,
-        Module = 0x00000008,
-        Module32 = 0x00000010,
-        Inherit = 0x80000000,
-        All = 0x0000001F,
-        NoHeaps = 0x40000000
-    }
     public enum HandleKey : uint
     {
         ClassesRoot = 0x80000000,
@@ -246,21 +233,6 @@ namespace regtime
         public override string ToString()
             => $"{nameof(Options)}:{nameof(AsCUI)}:{AsCUI}, {nameof(ShowHelp)}:{ShowHelp}, {nameof(DispKey)}:{DispKey}, {nameof(Machine)}:{Machine}, {nameof(DispAsGMT)}:{DispAsGMT}, {nameof(DispAsUnicode)}:{DispAsUnicode}";
     }
-    [StructLayout(LayoutKind.Sequential)]
-    public struct Processentry32
-    {
-        public uint Size;
-        public uint Usage;
-        public uint ProcessID;
-        public IntPtr DefaultHeapID;
-        public uint ModuleID;
-        public uint ThreadsCount;
-        public uint ParentProcessID;
-        public int PriClassBase;
-        public uint Flags;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
-        public string szExeFile;
-    };
     class Regtime
     {
         internal static Action<TextWriter, string> my_puts;
@@ -270,60 +242,35 @@ namespace regtime
         public static int MakeLangId(int primary, int sub) => (((ushort)sub) << 10) | ((ushort)primary);
         public static int PrimaryLangId(int lcid) => ((ushort)lcid) & 0x3ff;
         public static int SubLangId(int lcid) => ((ushort)lcid) >> 10;
-        static uint GetParentProcessName(out string ParentName)
+        static bool GetParentProcessName(out string ParentName)
         {
             ParentName = null;
-            Processentry32 pe32 = default;
             var ppid = 0u;
-            var r = 0u;
 
             var pid = NativeMethods.GetCurrentProcessId();
 
-            using (var hSnapshot = NativeMethods.CreateToolhelp32Snapshot(SnapshotFlags.Process, 0))
+            using (var hSnapshot = new Toolhelp32Snapshot(SnapshotFlags.Process, pid))
             {
                 if (hSnapshot.IsInvalid)
-                    return r;
-                pe32.Size = (uint)Marshal.SizeOf<Processentry32>();
-                if (!NativeMethods.Process32First(hSnapshot, ref pe32))
-                    return r;
-
+                    return false;
                 // find my process and get parent's pid
-                do
-                {
-                    if (pe32.ParentProcessID == pid)
-                    {
-                        pid = pe32.ParentProcessID;
-                        break;
-                    }
-                } while (NativeMethods.Process32Next(hSnapshot, ref pe32));
+                var pe32s = hSnapshot.GetProcess32().ToArray();
+                ppid = pe32s.FirstOrDefault(pe32 => pe32.ProcessID == pid).ParentProcessID;
 
                 if (ppid == 0)
-                    return r; // not found
+                    return false; // not found
 
-                // rewind
-                pe32 = default;
-                pe32.Size = (uint)Marshal.SizeOf<Processentry32>();
-                if (!NativeMethods.Process32First(hSnapshot, ref pe32))
-                    return r;
                 // find parrent process and get process name
-                do
-                {
-                    if (pe32.ProcessID == ppid)
-                    {
-                        ParentName = pe32.szExeFile;
-                        r = (uint)ParentName.Length;
-                        break;
-                    }
-                } while (NativeMethods.Process32Next(hSnapshot, ref pe32));
+                var target = pe32s.FirstOrDefault(pe32 => pe32.ProcessID == ppid);
+                ParentName = target.ExeFile;
+                return target != default;
             }
-            return r;
-
-
         }
         /* return TRUE if parent process is CMD.EXE */
         static bool IsCommandLine()
         {
-            uint r = GetParentProcessName(out var ParentName);
+            if (!GetParentProcessName(out var ParentName))
+                return false;
             if (!string.IsNullOrEmpty(ParentName))
             {
                 var SearchSymbol = new[] { '\\', '/' };
