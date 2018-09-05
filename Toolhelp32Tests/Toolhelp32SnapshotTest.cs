@@ -49,6 +49,22 @@ namespace Toolhelp32Tests
                     Trace.WriteLine(Process);
             }
         }
-
+        static IEnumerable<object[]> GetModule32TestData
+        {
+            get
+            {
+                yield return new object[] { SnapshotFlags.Module, 0u };
+                yield return new object[] { SnapshotFlags.Module32, 0u };
+            }
+        }
+        [TestMethod, DynamicData(nameof(GetModule32TestData))]
+        public void GetModule32Test(SnapshotFlags Flags, uint ProcessID)
+        {
+            using (var toolhelp = new Toolhelp32Snapshot(Flags, ProcessID))
+            {
+                foreach (var Module in toolhelp.GetModule32())
+                    Trace.WriteLine(Module);
+            }
+        }
     }
 }
