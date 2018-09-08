@@ -66,5 +66,25 @@ namespace Toolhelp32Tests
                     Trace.WriteLine(Module);
             }
         }
+        static IEnumerable<object[]> GetHeaplistTestData
+        {
+            get
+            {
+                yield return new object[] { SnapshotFlags.HeapList, 0u };
+            }
+        }
+        [TestMethod, DynamicData(nameof(GetHeaplistTestData))]
+        public void GetHeaplistTest(SnapshotFlags Flags, uint ProcessID)
+        {
+            using (var toolhelp = new Toolhelp32Snapshot(Flags, ProcessID))
+            {
+                foreach (var Heaplist in toolhelp.GetHeaplist32())
+                {
+                    Trace.WriteLine(Heaplist);
+                    foreach (var Heap in Heaplist.GetHeap32())
+                        Trace.WriteLine(Heap);
+                }
+            }
+        }
     }
 }

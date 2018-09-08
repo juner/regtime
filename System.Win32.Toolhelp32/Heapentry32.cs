@@ -23,9 +23,9 @@ namespace System.Win32.Toolhelp32
         /// </summary>
         public readonly uint BlockSize;
         /// <summary>
-        /// This member can be one of the following values. <see cref="Heapentry32Flags"/>
+        /// This member can be one of the following values. <see cref="ListFlags"/>
         /// </summary>
-        public readonly Heapentry32Flags Flags;
+        public readonly LocationFlags Flags;
         /// <summary>
         /// This member is no longer used and is always set to zero.
         /// </summary>
@@ -42,7 +42,7 @@ namespace System.Win32.Toolhelp32
         /// The heap identifier. This is not a handle, and has meaning only to the tool help functions.
         /// </summary>
         public readonly UIntPtr HeapID;
-        public Heapentry32(uint Size, IntPtr Handle, UIntPtr Address, uint BlockSize, Heapentry32Flags Flags, uint LockCount, uint Reserved, uint ProcessID, UIntPtr HeapID)
+        public Heapentry32(uint Size, IntPtr Handle, UIntPtr Address, uint BlockSize, LocationFlags Flags, uint LockCount, uint Reserved, uint ProcessID, UIntPtr HeapID)
             => (this.Size, this.Handle, this.Address, this.BlockSize, this.Flags, this.LockCount, this.Reserved, this.ProcessID, this.HeapID)
             = (Size, Handle, Address, BlockSize, Flags, LockCount, Reserved, ProcessID, HeapID);
 
@@ -74,7 +74,7 @@ namespace System.Win32.Toolhelp32
             return hashCode;
         }
 
-        public Heapentry32 Set(uint? Size = null, IntPtr? Handle = null, UIntPtr? Address = null, uint? BlockSize = null, Heapentry32Flags? Flags = null, uint? LockCount = null, uint? Reserved = null, uint? ProcessID = null, UIntPtr? HeapID = null)
+        public Heapentry32 Set(uint? Size = null, IntPtr? Handle = null, UIntPtr? Address = null, uint? BlockSize = null, LocationFlags? Flags = null, uint? LockCount = null, uint? Reserved = null, uint? ProcessID = null, UIntPtr? HeapID = null)
             => Size == null && Handle == null && Address == null && BlockSize == null && Flags == null && LockCount == null && Reserved == null && ProcessID == null && HeapID == null ? this
             : new Heapentry32(Size ?? this.Size, Handle ?? this.Handle, Address ?? this.Address, BlockSize ?? this.BlockSize, Flags ?? this.Flags, LockCount ?? this.LockCount, Reserved ?? this.Reserved, ProcessID ?? this.ProcessID, HeapID ?? this.HeapID);
         public override string ToString()
