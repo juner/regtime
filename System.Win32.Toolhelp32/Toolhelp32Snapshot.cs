@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using static System.Win32.Toolhelp32.Utils;
+using static System.Win32.Toolhelp32.NativeMethods;
 
 namespace System.Win32.Toolhelp32
 {
@@ -11,37 +12,15 @@ namespace System.Win32.Toolhelp32
     {
         public Toolhelp32Snapshot() : base(true) { }
         public Toolhelp32Snapshot(IntPtr preexistingHandle, bool ownsHandle) : base(ownsHandle) => SetHandle(preexistingHandle);
-        public Toolhelp32Snapshot(SnapshotFlags Flags, uint ProcessID = 0) : this(NativeMethods.CreateToolhelp32Snapshot(Flags, ProcessID), true) { }
+        public Toolhelp32Snapshot(ToolHelp32CreateSnapshot Flags, uint ProcessID = 0) : this(CreateToolhelp32Snapshot(Flags, ProcessID), true) { }
+        public static Toolhelp32Snapshot GetCurrent(ToolHelp32CreateSnapshot Flags) => new Toolhelp32Snapshot(Flags, GetCurrentProcessId());
         public override string ToString()
             => $"{nameof(Toolhelp32Snapshot)}{{{nameof(IsInvalid)}:{IsInvalid}, {nameof(IsClosed)}:{IsClosed}}}";
-
-        private static class NativeMethods
-        {
-            private const string Kernel32 = "kernel32.dll";
-            [DllImport(Kernel32, SetLastError = true, CharSet = CharSet.Unicode)]
-            public static extern IntPtr CreateToolhelp32Snapshot(SnapshotFlags dwFlags, uint th32ProcessID);
-
-            [DllImport(Kernel32, SetLastError = true)]
-            internal static extern bool CloseHandle(IntPtr handle);
-            [DllImport(Kernel32, SetLastError = true, CharSet = CharSet.Unicode)]
-            public static extern bool Process32First(Toolhelp32Snapshot hSnapshot, ref Processentry32 lppe);
-            [DllImport(Kernel32, SetLastError = true, CharSet = CharSet.Unicode)]
-            public static extern bool Process32Next(Toolhelp32Snapshot hSnapshot, ref Processentry32 lppe);
-            [DllImport(Kernel32, SetLastError = true, CharSet = CharSet.Unicode)]
-            public static extern bool Module32First(Toolhelp32Snapshot hSnapshot, ref Moduleentry32 lpme);
-            [DllImport(Kernel32, SetLastError = true, CharSet = CharSet.Unicode)]
-            public static extern bool Module32Next(Toolhelp32Snapshot hSnapshot, ref Moduleentry32 lpme);
-            [DllImport(Kernel32, SetLastError = true)]
-            public static extern bool Heap32ListFirst(Toolhelp32Snapshot hSnapshot, ref Heaplist32 lpme);
-            [DllImport(Kernel32, SetLastError = true)]
-            public static extern bool Heap32ListNext(Toolhelp32Snapshot hSnapshot, ref Heaplist32 lpme);
-
-        }
         public IEnumerable<Processentry32> GetProcess32()
         {
             var entry = new Processentry32()
                  .Set(Size: (uint)Marshal.SizeOf<Processentry32>());
-            if (!NativeMethods.Process32First(this, ref entry))
+            if (!Process32First(this, ref entry))
             {
                 var error = Marshal.GetHRForLastWin32Error();
                 if (error != NOT_MORE)
@@ -53,7 +32,7 @@ namespace System.Win32.Toolhelp32
                 do
                 {
                     yield return entry;
-                } while (NativeMethods.Process32Next(this, ref entry));
+                } while (Process32Next(this, ref entry));
                 var error = Marshal.GetHRForLastWin32Error();
                 if (error != NOT_MORE)
                     Marshal.ThrowExceptionForHR(error);
@@ -65,7 +44,7 @@ namespace System.Win32.Toolhelp32
         {
             var entry = new Moduleentry32()
                 .Set(Size: (uint)Marshal.SizeOf<Moduleentry32>());
-            if (!NativeMethods.Module32First(this, ref entry))
+            if (!Module32First(this, ref entry))
             {
                 ThrowIfHasException();
                 return Enumerable.Empty<Moduleentry32>();
@@ -75,7 +54,7 @@ namespace System.Win32.Toolhelp32
                 do
                 {
                     yield return entry;
-                } while (NativeMethods.Module32Next(this, ref entry));
+                } while (Module32Next(this, ref entry));
                 ThrowIfHasException();
                 yield break;
             }
@@ -83,24 +62,50 @@ namespace System.Win32.Toolhelp32
         }
         public IEnumerable<Heaplist32> GetHeaplist32()
         {
-            var entry = new Heaplist32()
-                .Set(Size: (uint)Marshal.SizeOf<Heaplist32>());
-            if (!NativeMethods.Heap32ListFirst(this, ref entry))
+            return Environment.Is64BitProcess
+                ? GetHeaplist32_64().Cast<Heaplist32>()
+                : GetHeaplist32_32().Cast<Heaplist32>();
+        }
+        public IEnumerable<Heaplist32_32> GetHeaplist32_32()
+        {
+            var entry = new Heaplist32_32()
+                .Set(Size: (uint)Marshal.SizeOf<Heaplist32_32>());
+            if (!Heap32ListFirst(this, ref entry))
             {
                 ThrowIfHasException();
-                return Enumerable.Empty<Heaplist32>();
+                return Enumerable.Empty<Heaplist32_32>();
             }
-            IEnumerable<Heaplist32> Generator()
+            IEnumerable<Heaplist32_32> Generator()
             {
                 do
                 {
                     yield return entry;
-                } while (NativeMethods.Heap32ListNext(this, ref entry));
+                } while (Heap32ListNext(this, ref entry));
                 ThrowIfHasException();
                 yield break;
             }
             return Generator();
         }
-        protected override bool ReleaseHandle() => NativeMethods.CloseHandle(handle);
+        public IEnumerable<Heaplist32_64> GetHeaplist32_64()
+        {
+            var entry = new Heaplist32_64()
+                .Set(Size: (uint)Marshal.SizeOf<Heaplist32_64>());
+            if (!Heap32ListFirst(this, ref entry))
+            {
+                ThrowIfHasException();
+                return Enumerable.Empty<Heaplist32_64>();
+            }
+            IEnumerable<Heaplist32_64> Generator()
+            {
+                do
+                {
+                    yield return entry;
+                } while (Heap32ListNext(this, ref entry));
+                ThrowIfHasException();
+                yield break;
+            }
+            return Generator();
+        }
+        protected override bool ReleaseHandle() => CloseHandle(handle);
     }
 }

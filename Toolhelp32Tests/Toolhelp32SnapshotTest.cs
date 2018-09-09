@@ -20,12 +20,12 @@ namespace Toolhelp32Tests
         {
             get
             {
-                yield return new object[] { SnapshotFlags.Process, 0u };
-                yield return new object[] { SnapshotFlags.All, 0u };
+                yield return new object[] { ToolHelp32CreateSnapshot.Process, 0u };
+                yield return new object[] { ToolHelp32CreateSnapshot.All, 0u };
             }
         }
         [TestMethod,DynamicData(nameof(Toolhelp32SnapshotTest2Data))]
-        public void Toolhelp32SnapshotTest2(SnapshotFlags Flags, uint ProcessID)
+        public void Toolhelp32SnapshotTest2(ToolHelp32CreateSnapshot Flags, uint ProcessID)
         {
             using (var toolhelp = new Toolhelp32Snapshot(Flags, ProcessID))
             {
@@ -37,11 +37,11 @@ namespace Toolhelp32Tests
         {
             get
             {
-                yield return new object[] { SnapshotFlags.Process, 0u };
+                yield return new object[] { ToolHelp32CreateSnapshot.Process, 0u };
             }
         }
         [TestMethod,DynamicData(nameof(GetProcess32TestData))]
-        public void GetProcess32Test(SnapshotFlags Flags, uint ProcessID)
+        public void GetProcess32Test(ToolHelp32CreateSnapshot Flags, uint ProcessID)
         {
             using (var toolhelp = new Toolhelp32Snapshot(Flags, ProcessID))
             {
@@ -53,12 +53,12 @@ namespace Toolhelp32Tests
         {
             get
             {
-                yield return new object[] { SnapshotFlags.Module, 0u };
-                yield return new object[] { SnapshotFlags.Module32, 0u };
+                yield return new object[] { ToolHelp32CreateSnapshot.Module, 0u };
+                yield return new object[] { ToolHelp32CreateSnapshot.Module32, 0u };
             }
         }
         [TestMethod, DynamicData(nameof(GetModule32TestData))]
-        public void GetModule32Test(SnapshotFlags Flags, uint ProcessID)
+        public void GetModule32Test(ToolHelp32CreateSnapshot Flags, uint ProcessID)
         {
             using (var toolhelp = new Toolhelp32Snapshot(Flags, ProcessID))
             {
@@ -70,11 +70,11 @@ namespace Toolhelp32Tests
         {
             get
             {
-                yield return new object[] { SnapshotFlags.HeapList, 0u };
+                yield return new object[] { ToolHelp32CreateSnapshot.HeapList, 0u };
             }
         }
         [TestMethod, DynamicData(nameof(GetHeaplistTestData))]
-        public void GetHeaplistTest(SnapshotFlags Flags, uint ProcessID)
+        public void GetHeaplist32Test(ToolHelp32CreateSnapshot Flags, uint ProcessID)
         {
             using (var toolhelp = new Toolhelp32Snapshot(Flags, ProcessID))
             {

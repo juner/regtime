@@ -4,7 +4,7 @@
     /// The portions of the system to be included in the snapshot. This parameter can be one or more of the following values.
     /// </summary>
     [Flags]
-    public enum SnapshotFlags : uint
+    public enum ToolHelp32CreateSnapshot : uint
     {
         /// <summary>
         /// Includes all heaps of the process specified in th32ProcessID in the snapshot. To enumerate the heaps, see Heap32ListFirst. 

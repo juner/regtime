@@ -249,7 +249,7 @@ namespace regtime
 
             var pid = NativeMethods.GetCurrentProcessId();
 
-            using (var hSnapshot = new Toolhelp32Snapshot(SnapshotFlags.Process, pid))
+            using (var hSnapshot = new Toolhelp32Snapshot(ToolHelp32CreateSnapshot.Process, pid))
             {
                 if (hSnapshot.IsInvalid)
                     return false;
